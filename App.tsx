@@ -71,7 +71,7 @@ const App: React.FC = () => {
              {/* Social Media Links */}
              <div className="flex flex-wrap gap-4 pointer-events-auto">
                 <a 
-                  href="https://linkedin.com/in/mehdiboumassad" 
+                  href="https://www.linkedin.com/in/mehdi-oumassad-0b71841a7/" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2 px-4 py-2 border border-[#333] hover:border-emerald-500 hover:bg-emerald-500/10 transition-all duration-300"
@@ -80,7 +80,7 @@ const App: React.FC = () => {
                   <span className="font-mono text-xs tracking-widest text-neutral-400 group-hover:text-emerald-500">LINKEDIN</span>
                 </a>
                 <a 
-                  href="https://github.com/mehdiboumassad" 
+                  href="https://github.com/MCG1312" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2 px-4 py-2 border border-[#333] hover:border-emerald-500 hover:bg-emerald-500/10 transition-all duration-300"
