@@ -13,6 +13,12 @@ import { SystemHeader } from './components/SystemHeader';
 import { TerminalAudit } from './components/TerminalAudit';
 import { Project } from './types';
 
+// --- CONFIGURATION: SOCIAL MEDIA LINKS ---
+const SOCIAL_LINKS = {
+  LINKEDIN: "https://linkedin.com/in/mehdiboumassad", // <--- UPDATE THIS
+  GITHUB: "https://github.com/mehdiboumassad"         // <--- UPDATE THIS
+};
+
 const PROJECTS: Project[] = [
   {
     id: '01',
@@ -71,7 +77,7 @@ const App: React.FC = () => {
              {/* Social Media Links */}
              <div className="flex flex-wrap gap-4 pointer-events-auto">
                 <a 
-                  href="https://www.linkedin.com/in/mehdi-oumassad-0b71841a7/" 
+                  href={SOCIAL_LINKS.LINKEDIN} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2 px-4 py-2 border border-[#333] hover:border-emerald-500 hover:bg-emerald-500/10 transition-all duration-300"
@@ -80,7 +86,7 @@ const App: React.FC = () => {
                   <span className="font-mono text-xs tracking-widest text-neutral-400 group-hover:text-emerald-500">LINKEDIN</span>
                 </a>
                 <a 
-                  href="https://github.com/MCG1312" 
+                  href={SOCIAL_LINKS.GITHUB} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2 px-4 py-2 border border-[#333] hover:border-emerald-500 hover:bg-emerald-500/10 transition-all duration-300"
@@ -105,8 +111,7 @@ const App: React.FC = () => {
                       rotation={[0, -Math.PI / 4, 0]} 
                       polar={[-Math.PI / 4, Math.PI / 4]} 
                       azimuth={[-Math.PI / 4, Math.PI / 4]}
-                      config={{ mass: 2, tension: 500 }}
-                      snap={{ mass: 4, tension: 1500 }}
+                      snap={true}
                    >
                       <HeroArtifact />
                    </PresentationControls>

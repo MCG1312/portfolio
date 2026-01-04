@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { supabase } from './supabaseClient';
 
 // --- TYPES ---
 interface Payload {
@@ -18,6 +17,12 @@ interface ServerResponse {
 const RATE_LIMIT_DURATION = 60 * 60 * 1000; // 1 Hour
 const RATE_LIMIT_MAX_REQUESTS = 3;
 
+// [CONFIGURATION REQUIRED]
+// Leave this empty ("") to use the manual Mailto fallback.
+// Or add your API URL (e.g. Formspree) to automate it.
+const EMAIL_SERVICE_URL: string = ""; 
+const FALLBACK_EMAIL = "contact@mehdioumassad.com"; // <--- Destination Email
+
 // --- 1. ZOD SCHEMA VALIDATION ---
 const ContactSchema = z.object({
   identity: z.string().min(2, "Identity too short").max(100),
@@ -27,18 +32,15 @@ const ContactSchema = z.object({
 });
 
 // --- 2. SANITIZATION ---
-// Strips HTML tags to prevent stored XSS
 const sanitizeInput = (input: string): string => {
   return input
     .replace(/<[^>]*>/g, '') // Strip HTML tags
     .replace(/[^\w\s@.,?!-]/gi, (char) => {
-        // Allow basic punctuation and alphanumeric, hex encode others if suspicious
         return char;
     });
 };
 
 // --- 3. CLIENT-SIDE RATE LIMITING ---
-// Note: A robust backend would also check IP on the Edge Function level.
 const checkRateLimit = (): boolean => {
   try {
     const storageKey = 'OBSIDIAN_UPLINK_LIMIT';
@@ -46,8 +48,6 @@ const checkRateLimit = (): boolean => {
     const now = Date.now();
 
     let history: number[] = rawData ? JSON.parse(rawData) : [];
-    
-    // Filter out timestamps older than the duration window
     history = history.filter(timestamp => now - timestamp < RATE_LIMIT_DURATION);
 
     if (history.length >= RATE_LIMIT_MAX_REQUESTS) {
@@ -58,17 +58,18 @@ const checkRateLimit = (): boolean => {
     localStorage.setItem(storageKey, JSON.stringify(history));
     return true;
   } catch (e) {
-    return true; // Fallback to allow if local storage fails
+    return true; 
   }
 };
 
 export const SecureUplink = {
   async transmit(data: Payload): Promise<ServerResponse> {
+    console.log("SecureUplink: V.3.1 - PROTOCOL: HYBRID (API/MAILTO)");
+
     try {
       // A. HONEYPOT CHECK
       if (data._honey && data._honey.length > 0) {
-        // Silently fail for bots
-        return { status: 200, message: 'PACKET_RECEIVED' }; 
+        return { status: 201, message: 'PACKET_SECURE: Data written to cold storage.' }; 
       }
 
       // B. RATE LIMIT CHECK
@@ -76,50 +77,64 @@ export const SecureUplink = {
         return { status: 429, message: 'ERR_RATE_LIMIT: Traffic throttle active. Try again later.' };
       }
 
-      // C. VALIDATION (Zod)
+      // C. VALIDATION
       const parseResult = ContactSchema.safeParse(data);
       if (!parseResult.success) {
-        const errorMsg = parseResult.error.errors[0].message;
+        const errorMsg = parseResult.error.issues[0].message;
         return { status: 400, message: `ERR_VALIDATION: ${errorMsg}` };
       }
 
       // D. SANITIZATION
       const cleanPayload = {
-        identity: sanitizeInput(data.identity),
-        frequency: sanitizeInput(data.frequency),
+        name: sanitizeInput(data.identity),
+        email: sanitizeInput(data.frequency),
         message: sanitizeInput(data.message),
+        _subject: `[OBSIDIAN] Uplink from ${sanitizeInput(data.identity)}`,
         metadata: {
           userAgent: navigator.userAgent,
           timestamp: new Date().toISOString()
         }
       };
 
-      // E. DATABASE INGESTION (Supabase)
-      const { error } = await supabase
-        .from('contact_inquiries')
-        .insert([
-          { 
-            name: cleanPayload.identity, 
-            email: cleanPayload.frequency, 
-            message: cleanPayload.message,
-            metadata: cleanPayload.metadata
-          }
-        ]);
-
-      if (error) {
-        console.error("Supabase Error:", error);
-        throw new Error("Uplink unstable");
+      // E. TRANSMISSION (Email Service or Fallback)
+      
+      // Check if user has configured the endpoint
+      if (!EMAIL_SERVICE_URL || EMAIL_SERVICE_URL.includes("REPLACE_WITH_YOUR_ID")) {
+          console.warn("SecureUplink: No Email API configured. Engaging manual fallback.");
+          
+          const subject = encodeURIComponent(cleanPayload._subject);
+          const body = encodeURIComponent(`IDENTITY: ${cleanPayload.name}\nFREQUENCY: ${cleanPayload.email}\n\nDATA:\n${cleanPayload.message}`);
+          
+          // Open Mail Client
+          window.location.href = `mailto:${FALLBACK_EMAIL}?subject=${subject}&body=${body}`;
+          
+          return { status: 201, message: 'REDIRECTING: Opening local mail relay...' };
       }
 
-      return { status: 201, message: 'PACKET_SECURE: Data written to cold storage.' };
+      // Fetch Request to Service
+      const response = await fetch(EMAIL_SERVICE_URL, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(cleanPayload)
+      });
+
+      if (response.ok) {
+        return { status: 201, message: 'PACKET_DELIVERED: Secure channel confirmed.' };
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Server rejected payload");
+      }
 
     } catch (err: any) {
-      return { status: 500, message: `ERR_TRANSMISSION: ${err.message || 'Unknown system failure'}` };
+      console.error("Uplink Exception:", err);
+      return { status: 500, message: `ERR_TRANSMISSION: ${err.message || 'Signal lost'}` };
     }
   },
 
   async purge(): Promise<ServerResponse> {
-    // Client-side purge only clears local artifacts, cannot wipe DB without admin key
     localStorage.removeItem('OBSIDIAN_UPLINK_LIMIT');
     return { status: 200, message: 'LOCAL_CACHE_PURGED' };
   }
