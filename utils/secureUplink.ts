@@ -21,7 +21,7 @@ const RATE_LIMIT_MAX_REQUESTS = 3;
 // Leave this empty ("") to use the manual Mailto fallback.
 // Or add your API URL (e.g. Formspree) to automate it.
 const EMAIL_SERVICE_URL: string = ""; 
-const FALLBACK_EMAIL = "contact@mehdioumassad.com"; // <--- Destination Email
+const FALLBACK_EMAIL = "aumssadm7@gmail.com"; // <--- Destination Email
 
 // --- 1. ZOD SCHEMA VALIDATION ---
 const ContactSchema = z.object({
