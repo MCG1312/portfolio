@@ -21,7 +21,7 @@ const RATE_LIMIT_MAX_REQUESTS = 3;
 // Leave this empty ("") to use the manual Mailto fallback.
 // Or add your API URL (e.g. Formspree) to automate it.
 const EMAIL_SERVICE_URL: string = ""; 
-const FALLBACK_EMAIL = "aumssadm7@gmail.com"; // <--- Destination Email
+const FALLBACK_EMAIL = "contact@mehdioumassad.com"; // <--- Destination Email
 
 // --- 1. ZOD SCHEMA VALIDATION ---
 const ContactSchema = z.object({
@@ -96,20 +96,33 @@ export const SecureUplink = {
         }
       };
 
-      // E. TRANSMISSION (Email Service or Fallback)
       
-      // Check if user has configured the endpoint
-      if (!EMAIL_SERVICE_URL || EMAIL_SERVICE_URL.includes("REPLACE_WITH_YOUR_ID")) {
-          console.warn("SecureUplink: No Email API configured. Engaging manual fallback.");
-          
-          const subject = encodeURIComponent(cleanPayload._subject);
-          const body = encodeURIComponent(`IDENTITY: ${cleanPayload.name}\nFREQUENCY: ${cleanPayload.email}\n\nDATA:\n${cleanPayload.message}`);
-          
-          // Open Mail Client
-          window.location.href = `mailto:${FALLBACK_EMAIL}?subject=${subject}&body=${body}`;
-          
-          return { status: 201, message: 'REDIRECTING: Opening local mail relay...' };
-      }
+// E. TRANSMISSION (Email Service or Fallback)
+
+const FALLBACK_EMAIL = 'aumssadm7@gmail.com'
+
+// Check if user has configured the endpoint
+if (!EMAIL_SERVICE_URL || EMAIL_SERVICE_URL.includes('REPLACE_WITH_YOUR_ID')) {
+  console.warn('SecureUplink: No Email API configured. Engaging manual fallback.')
+
+  const subject = encodeURIComponent(cleanPayload._subject)
+  const body = encodeURIComponent(
+    `IDENTITY: ${cleanPayload.name}
+FREQUENCY: ${cleanPayload.email}
+
+DATA:
+${cleanPayload.message}`
+  )
+
+  // Open local mail client (fallback relay)
+  window.location.href = `mailto:${FALLBACK_EMAIL}?subject=${subject}&body=${body}`
+
+  return {
+    status: 201,
+    message: 'REDIRECTING: Opening local mail relay...',
+  }
+}
+
 
       // Fetch Request to Service
       const response = await fetch(EMAIL_SERVICE_URL, {
