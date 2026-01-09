@@ -15,8 +15,8 @@ import { Project } from './types';
 
 // --- CONFIGURATION: SOCIAL MEDIA LINKS ---
 const SOCIAL_LINKS = {
-  LINKEDIN: "https://linkedin.com/in/mehdiboumassad", // <--- UPDATE THIS
-  GITHUB: "https://github.com/mehdiboumassad"         // <--- UPDATE THIS
+  LINKEDIN: "https://www.linkedin.com/in/mehdi-oumassad-0b71841a7/", // <--- UPDATE THIS
+  GITHUB: "https://github.com/MCG1312"         // <--- UPDATE THIS
 };
 
 const PROJECTS: Project[] = [
